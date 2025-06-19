@@ -285,6 +285,180 @@ OpenFeature is the answer to all these problems.
 -->
 
 ---
+transition: slide-up
+layout: center
+---
+
+# OpenFeature Concepts
+
+<!--
+OpenFeature goals to provide a simple, consistent, and powerful API in a vendor-agnostic way. 
+To accomplish this, the OpenFeature SDK defines a number of flexible abstractions.
+-->
+
+---
+transition: slide-up
+layout: center
+---
+
+# 1. Evaluation API
+
+The Evaluation API allows developers to evaluate feature flags to alter control flow and application characteristics.
+
+Flag evaluation simply returns flag values of a particular type. 
+The default value must also be specified. 
+In the case of any error during flag evaluation, the default value will be returned.
+
+```ts
+// get a bool value
+const boolValue = await client.getBooleanValue('boolFlag', false);
+
+// get a string value
+const stringValue = await client.getStringValue('stringFlag', 'default');
+
+// get an numeric value
+const numberValue = await client.getNumberValue('intFlag', 1);
+
+// get an object value
+const object = await client.getObjectValue<MyObject>('objectFlag', {});
+```
+
+<!--
+-->
+
+---
+transition: slide-up
+layout: center
+---
+
+# 2. Providers
+
+Providers are responsible for performing flag evaluations. 
+They provide an abstraction between the underlying flag management system and the OpenFeature SDK. 
+
+```ts
+import { OpenFeature } from '@openfeature/react-sdk'
+// example: flagsmith as vendor provider
+import { FlagsmithClientProvider } from '@openfeature/flagsmith-client-provider'
+
+const flagsmithClientProvider = new FlagsmithClientProvider({
+  api: ENV.VITE_FLAGSMITH_API_URL,
+  environmentID: ENV.VITE_FLAGSMITH_ENVIRONMENT_ID,
+})
+OpenFeature.setProvider(flagsmithClientProvider)
+```
+
+<img src="https://openfeature.dev/assets/images/of-architecture-a49b167df4037d936bd6623907d84de1.png" alt="Providers" class="object-cover h-60" />
+
+<!--
+Providers can wrap a vendor SDK, call a bespoke flag evaluation REST API, or even parse some locally stored file to resolve flag values. 
+This allows the underlying flag evaluation logic to be changed without requiring a major code refactor.
+-->
+
+---
+transition: slide-up
+layout: center
+---
+
+# 3. Evaluation Context
+
+The evaluation context is a container for arbitrary contextual data that can be used as a basis for dynamic evaluation. 
+
+Static data such as the host or an identifier for the application can be configured globally. 
+
+Dynamic evaluation context, such as the IP address of the client in a web application, 
+can be implicitly propagated or explicitly passed to during flag evaluation, 
+and can be merged with static values.
+
+```ts
+import { OpenFeature } from '@openfeature/react-sdk'
+
+// set context, after user logged in
+const user = {
+  id: '123',
+  name: 'John Doe',
+  email: 'john.doe@example.com',
+  role: 'admin',
+  country: 'US',
+}
+OpenFeature.setContext({ targetingKey: user.id, traits: { name: user.name, role: user.role, country: user.country } })
+
+// reset context, after user logged out
+OpenFeature.setContext({})
+```
+
+<!--
+-->
+
+---
+transition: slide-up
+layout: center
+---
+
+# 4. Hooks
+
+Hooks are a mechanism that allow for the addition of arbitrary behavior at well-defined points of the flag evaluation life-cycle. 
+
+```ts
+import { OpenFeature, Hook, EvaluationDetails, FlagValue, HookContext } from '@openfeature/react-sdk'
+
+class MyHook implements Hook {
+  // code to run before flag evaluation
+  before(hookContext: HookContext) {}
+  // code to run after successful flag evaluation
+  after(hookContext: HookContext, details: EvaluationDetails<FlagValue>) {}
+  // code to run if there's an error during before hooks or during flag evaluation
+  error(hookContext: HookContext, err: Error) {}
+  // code to run after all other stages, regardless of success/failure
+  finally(hookContext: HookContext, details: EvaluationDetails<FlagValue>) {}
+}
+// add a hook globally, to run on all evaluations
+OpenFeature.addHooks(new MyHook());
+// add a hook on this client, to run on all evaluations made by this client
+const client = OpenFeature.getClient();
+client.addHooks(new MyHook());
+// add a hook for this evaluation only
+const value = await client.getBooleanValue(FLAG_KEY, false, context, {
+  hooks: [new MyHook()],
+});
+```
+
+<!--
+Use cases include validation of the resolved flag value, 
+modifying or adding data to the evaluation context, logging, telemetry, and tracking.
+-->
+
+---
+transition: slide-up
+layout: center
+---
+
+# 5. Events
+
+Events enable the ability to react to state changes in the provider or underlying flag management system. 
+
+These include changes in provider readiness, error status, or perhaps most interestingly, flag configuration changes.
+
+```ts
+import { OpenFeature, ProviderEvents } from '@openfeature/react-sdk'
+
+// add an event handler to a client
+const client = OpenFeature.getClient();
+client.addHandler(ProviderEvents.ConfigurationChanged, (eventDetails) => {
+  // do something when the provider's flag settings change
+});
+
+// add an event handler to the global API
+OpenFeature.addHandler(ProviderEvents.Error, (eventDetails) => {
+  // do something when if the provider goes into an error state
+  // beside `ProviderEvents.Error`, there are also `ProviderEvents.Ready`, `ProviderEvents.ConfigurationChanged`, etc.
+});
+```
+
+<!--
+-->
+
+---
 transition: slide-left
 layout: center
 ---
