@@ -268,6 +268,29 @@ transition: slide-left
 layout: center
 ---
 
+# Feature Flags + Trunk‑Based Development
+
+Trunk-based development is a software development approach where the main branch (often called `trunk` or `main`) is kept in a stable, releasable state at all times. 
+
+Feature flags are a core enabler of trunk-based development. 
+They let teams integrate continuously while controlling exposure.
+
+- Keep `trunk`/`main` always releasable; unfinished work hidden behind flags
+- Merge small, frequent changes to `trunk` without impacting users, enabling faster feedback loops
+- Separate deployment from release to avoid long‑lived branches
+- Enable dark launches, internal/beta testing, and progressive rollouts
+- Provide instant rollback via kill switches (flags) when issues arise, reducing downtime and risk
+- Reduce merge conflicts and accelerate CI/CD while maintaining stability
+
+<!--
+Dark launches or internal/beta testing is a technique where a feature is released to a small subset of users, and then gradually rolled out to the rest of the users.
+-->
+
+---
+transition: slide-left
+layout: center
+---
+
 # OpenFeature
 
 <img src="https://repository-images.githubusercontent.com/837408076/c75a70a7-aad4-4a0a-b09c-10fb8aca6062" alt="OpenFeature" class="object-cover h-80" />
